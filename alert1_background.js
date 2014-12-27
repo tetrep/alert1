@@ -1,20 +1,22 @@
 alert1 = {
-  make_chrome_notification: function (stack_trace) {
+  make_chrome_notification: function (data) {
     var nopts = {
       type: 'basic',
       iconUrl: 'icon.png',
-      title: 'Function hooked',
+      title: data.title + ' ' + data.func,
       message: 'Click for stack trace...'
     };
-    chrome.notifications.create(stack_trace, nopts, function(){});
+    var ding = new Audio("lvlup.wav");
+    ding.play();
+    chrome.notifications.create(data.stack_trace, nopts, function(){});
   },
 
   display_stack_trace: function (nid) {
     chrome.windows.create({'url': chrome.extension.getURL('stack_trace.html')+'#'+encodeURIComponent(nid)});
   },
 
-  recv_msg: function (msg) {
-    this.make_chrome_notification(msg.stack_trace);
+  recv_msg: function (data) {
+    this.make_chrome_notification(data);
   }
 };
 

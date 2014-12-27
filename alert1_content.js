@@ -60,12 +60,13 @@ alert1 = {
     return (new Error('stack trace: '+Math.random().toString())).stack;
   },
 
-  make_chrome_notification: function () {
-    chrome.runtime.sendMessage({stack_trace: this.get_stack_trace()}, function(){});
+  make_chrome_notification: function (data) {
+    chrome.runtime.sendMessage(data, function(){});
   }
 };
 
 //listen for stack traces
+//make a nonce that we'll use to filter postmessages
 nonce = Math.random().toString();
 window.addEventListener("message", function(event) {
   // We only accept messages from ourselves
@@ -73,7 +74,7 @@ window.addEventListener("message", function(event) {
     return;
 
   if (nonce == event.data.nonce) {
-    alert1.make_chrome_notification(event.data.stack_trace);
+    alert1.make_chrome_notification(event.data);
   }
 }, false);
 
@@ -90,7 +91,7 @@ for (i = 0; i < alert1_keys.length; i++)
   var val = alert1[alert1_keys[i]].toString();
 
   //we won't use this, so don't inject it
-  if(key != 'make_chrome_notification') {
+  if (key != 'make_chrome_notification') {
     //console.log("found key: "+key);
     //console.log("found val: "+val);
     //console.log(val);
@@ -98,10 +99,10 @@ for (i = 0; i < alert1_keys.length; i++)
   }
 }
 
-//make a nonce so it's harder for pages to fuck with us
+//inject a nonce so it's harder for pages to fuck with us
 s += 'var nonce = '+nonce+';\n';
 //we need to postmessage to ourselves to go from page -> content script
-s += 'var clsr = function (msg) { window.postMessage({ nonce: nonce, stack_trace: alert1.get_stack_trace(), org_msg: msg }, "*"); };\n';
+s += 'var clsr = function (msg) { window.postMessage({ nonce: nonce, title: document.title, func: \'alert(1)\', stack_trace: alert1.get_stack_trace(), org_msg: msg }, "*"); };\n';
 //hook alert(1) (via whitelist)
 s += 'alert1.hook_function(\'alert\', this, \'clsr\', this, true, [1]);\n';
 s += 'alert(1);\n';
