@@ -1,4 +1,8 @@
 alert1 = {
+  settings: {
+    enabled: true,
+  },
+
   make_chrome_notification: function (data) {
     var nopts = {
       type: 'basic',
@@ -15,8 +19,12 @@ alert1 = {
     chrome.windows.create({'url': chrome.extension.getURL('stack_trace.html')+'#'+encodeURIComponent(nid)});
   },
 
-  recv_msg: function (data) {
-    this.make_chrome_notification(data);
+  recv_msg: function (data, sender, send_response) {
+    if (data.stack_trace) {
+      this.make_chrome_notification(data);
+    } else {
+      send_response(this.settings);
+    }
   }
 };
 
