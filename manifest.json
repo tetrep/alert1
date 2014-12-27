@@ -1,0 +1,31 @@
+{
+  "manifest_version": 2,
+
+  "name": "alert1",
+  "description": "Hooks alert to make notifications instead of pop-ups.",
+  "version": "0.1",
+
+  "permissions": [
+    "notifications"
+  ],
+
+  "content_scripts": [
+    {
+      //"matches": ["https://news.ycombinator.com/*"],
+      "matches": ["<all_urls>"],
+      "js": ["alert1_content.js"],
+      "run_at": "document_idle",
+      "match_about_blank": true
+    }
+  ],
+
+  "background": {
+    "scripts": ["alert1_background.js"],
+    "persistent": false
+  },
+
+  "browser_action": {
+    "default_icon": "icon.png",
+    "default_popup": "popup.html"
+  }
+}
