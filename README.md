@@ -11,5 +11,5 @@ Super hacky, JavaScript must be directly injected into every page (via the DOM) 
 We're relying upon Chrome's ability to convert functions into valid JavaScript strings to make the injection programmatic, but this is not (afaik) defined behavior and could break whenever the devs feel like it.
 
 ## todo
-- add config to extension `browser_action`
+- expose more configuration options
 - add add more details to notifications/stack traces?

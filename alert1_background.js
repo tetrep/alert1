@@ -20,11 +20,23 @@ alert1 = {
   },
 
   recv_msg: function (data, sender, send_response) {
-    if (data.stack_trace) {
-      this.make_chrome_notification(data);
-    } else {
-      send_response(this.settings);
+    //check if coming from a tab
+    if (sender.url || sender.tab) {
+      //display stack trace sent to us
+      if (data.stack_trace) {
+        this.make_chrome_notification(data);
+      }
+      //return settings if tab isn't sending us stack trace
+      else {
+        send_response(this.settings);
+      }
     }
+    //set settings if not from a tab and if given settings to set
+    else if (data.settings) {
+      alert1.settings = data.settings;
+    }
+
+    console.log(alert1.settings);
   }
 };
 
