@@ -2,7 +2,7 @@ alert1 = {
   make_chrome_notification: function (data) {
     var nopts = {
       type: 'basic',
-      iconUrl: 'icon.png',
+      iconUrl: 'img/icon/icon128.png',
       title: data.title + ' ' + data.func,
       message: 'Click for stack trace...'
     };

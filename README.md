@@ -12,5 +12,4 @@ We're relying upon Chrome's ability to convert functions into valid JavaScript s
 
 ## todo
 - add config to extension `browser_action`
-- make a pretty icon
 - add add more details to notifications/stack traces?
