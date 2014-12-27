@@ -3,7 +3,7 @@ alert1 = {
     var nopts = {
       type: 'basic',
       iconUrl: 'icon.png',
-      title: 'function hooked',
+      title: 'Function hooked',
       message: 'Click for stack trace...'
     };
     chrome.notifications.create(stack_trace, nopts, function(){});

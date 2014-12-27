@@ -1,10 +1,8 @@
 alert1 = {
-  hooked_functions : [],
-
   hook_function: function (func_old_in, func_old_scope, func_new_in, func_new_scope, hook_whitelist_check_in, whitelist_in, hook_blacklist_check_in, blacklist_in) {
     var hooked_function = {
-      func_old: func_old_in,
-      func_new: func_new_in,
+      func_old: func_old_scope[func_old_in],
+      func_new: func_new_scope[func_new_in],
       func_hook: this.default_func_hook,
       settings: {
         hook_whitelist_check: false,
@@ -12,7 +10,7 @@ alert1 = {
         hook_blacklist_check: false,
         blacklist: []
       }
-    }
+    };
 
     //give scope to functions
     hooked_function.func_old = hooked_function.func_old.bind(func_old_scope);
@@ -25,7 +23,9 @@ alert1 = {
     if (hook_blacklist_check_in) { hooked_function.settings.hook_blacklist_check = hook_blacklist_check_in; }
     if (blacklist_in) { hooked_function.settings.blacklist = blacklist_in; }
 
-    this.hooked_functions.push(hooked_function);
+    //actually hook the function
+    func_old_scope[func_old_in] = hooked_function.func_hook;
+
     return hooked_function;
   },
 
@@ -46,10 +46,12 @@ alert1 = {
 
     //only hook if we passed whitelist and blacklist
     if (whitelist_pass && blacklist_pass) {
+      console.log('calling new function');
       return this.func_new(input);
     }
     //we don't want to hook this input
     else {
+      console.log('calling old function');
       return this.func_old(input);
     }
   },
@@ -58,13 +60,10 @@ alert1 = {
     return (new Error('stack trace: '+Math.random().toString())).stack;
   },
 
-  make_chrome_notification: function (st) {
-    chrome.runtime.sendMessage({stack_trace: st}, function(){});
+  make_chrome_notification: function () {
+    chrome.runtime.sendMessage({stack_trace: this.get_stack_trace()}, function(){});
   }
 };
-
-//alert = alert1.hook_function(alert, this, alert1.make_chrome_notification, alert1, true, [1]);
-//alert(1);
 
 //listen for stack traces
 nonce = Math.random().toString();
@@ -78,11 +77,33 @@ window.addEventListener("message", function(event) {
   }
 }, false);
 
+//init string of JavaScript to inject
 s = '';
-s += 'var get_stack_trace = function () { e = new Error(\'stack trace: \'+Math.random().toString()); return e.stack; }\n';
+
+//we want to inject most of alert1
+alert1_keys = Object.keys(alert1);
+var i = 0;
+s += 'var alert1 = {};\n';
+for (i = 0; i < alert1_keys.length; i++)
+{
+  var key = alert1_keys[i];
+  var val = alert1[alert1_keys[i]].toString();
+
+  //we won't use this, so don't inject it
+  if(key != 'make_chrome_notification') {
+    //console.log("found key: "+key);
+    //console.log("found val: "+val);
+    //console.log(val);
+    s += 'alert1[\''+key+'\'] = '+val+'\n';
+  }
+}
+
+//make a nonce so it's harder for pages to fuck with us
 s += 'var nonce = '+nonce+';\n';
-s += 'var clsr = function (st, msg) { window.postMessage({ nonce: nonce, stack_trace: st, org_msg: msg}, "*");};\n';
-s += 'var hook = function(msg) { clsr(get_stack_trace(), msg); };\n';
-s += 'alert = hook;\n';
-//s += 'alert(1);'
+//we need to postmessage to ourselves to go from page -> content script
+s += 'var clsr = function (msg) { window.postMessage({ nonce: nonce, stack_trace: alert1.get_stack_trace(), org_msg: msg }, "*"); };\n';
+//hook alert(1) (via whitelist)
+s += 'alert1.hook_function(\'alert\', this, \'clsr\', this, true, [1]);\n';
+s += 'alert(1);\n';
+
 document.body.appendChild(document.createElement('script')).innerHTML=s;
