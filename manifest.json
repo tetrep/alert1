@@ -6,7 +6,8 @@
   "version": "0.3",
 
   "permissions": [
-    "notifications"
+    "notifications",
+    "storage"
   ],
 
   "content_scripts": [

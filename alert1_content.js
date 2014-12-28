@@ -1,12 +1,3 @@
-var alert1 = {};
-alert1.settings = {enabled: false};
-chrome.runtime.sendMessage({get_settings: "pl0x"},
-  function (response) {
-    alert1.settings = response;
-    alert1_wrapper(alert1);
-  }
-);
-
 //wraps literally everthing, we don't do anything if we're not enabled
 var alert1_wrapper = function (alert1) { if (alert1.settings.enabled) {
 
@@ -106,7 +97,7 @@ var alert1_keys = Object.keys(alert1);
 var i = 0;
 s += 'var alert1 = {};\n';
 //pass objects
-s += 'alert1.settings = '+JSON.stringify(alert1.settings)+';';
+//s += 'alert1.settings = '+JSON.stringify(alert1.settings)+';';
 //objects and unused functions are at the top of our object
 //so we can skip them we "serializing" our functions
 for (i = 2; i < alert1_keys.length; i++)
@@ -128,3 +119,13 @@ s += 'alert(1);\n';
 document.body.appendChild(document.createElement('script')).innerHTML=s;
 
 }}
+
+var alert1 = {};
+alert1.settings = {enabled: false};
+//setup callback for after we have loaded our settings
+chrome.storage.local.get("settings",
+  function (data) {
+    alert1.settings = data;
+    alert1_wrapper(alert1);
+  }
+);

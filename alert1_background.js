@@ -3,16 +3,16 @@ alert1 = {
     enabled: true,
   },
 
-  make_chrome_notification: function (data) {
+  make_chrome_notification: function (page_title, func, stack_trace) {
     var nopts = {
       type: 'basic',
       iconUrl: 'img/icon/icon128.png',
-      title: data.title + ' ' + data.func,
+      title: page_title + ' ' + func,
       message: 'Click for stack trace...'
     };
     var ding = new Audio("lvlup.wav");
     ding.play();
-    chrome.notifications.create(data.stack_trace, nopts, function(){});
+    chrome.notifications.create(stack_trace, nopts, function(){});
   },
 
   display_stack_trace: function (nid) {
@@ -23,20 +23,10 @@ alert1 = {
     //check if coming from a tab
     if (sender.url || sender.tab) {
       //display stack trace sent to us
-      if (data.stack_trace) {
-        this.make_chrome_notification(data);
-      }
-      //return settings if tab isn't sending us stack trace
-      else {
-        send_response(this.settings);
+      if (data.title && data.func && data.stack_trace) {
+        this.make_chrome_notification(data.title, data.func, data.stack_trace);
       }
     }
-    //set settings if not from a tab and if given settings to set
-    else if (data.settings) {
-      alert1.settings = data.settings;
-    }
-
-    console.log(alert1.settings);
   }
 };
 
