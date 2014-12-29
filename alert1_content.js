@@ -84,8 +84,11 @@ window.addEventListener("message", function(event) {
   if (event.source != window)
     return;
 
-  if (nonce == event.data.nonce) {
+  //match nonce and make sure all the data we need is available
+  if (nonce == event.data.nonce && event.data.title && event.data.func && event.data.stack_trace && event.data.org_msg) {
     alert1.make_chrome_notification(event.data);
+  } else {
+    console.log('invalid message');
   }
 }, false);
 
@@ -111,7 +114,7 @@ for (i = 2; i < alert1_keys.length; i++)
 //inject a nonce so it's harder for pages to fuck with us
 s += 'var nonce = '+nonce+';\n';
 //we need to postmessage to ourselves to go from page -> content script
-s += 'var clsr = function (msg) { window.postMessage({ nonce: nonce, title: document.title, func: \'alert(1)\', stack_trace: alert1.get_stack_trace(), org_msg: msg }, "*"); };\n';
+s += 'var clsr = function (msg) { window.postMessage({ nonce: nonce, title: document.title, func: \'alert\', stack_trace: alert1.get_stack_trace(), org_msg: msg }, "*"); };\n';
 //hook alert(1) (via whitelist)
 s += 'alert1.hook_function(\'alert\', this, \'clsr\', this, true, [1]);\n';
 s += 'alert(1);\n';
@@ -123,9 +126,9 @@ document.body.appendChild(document.createElement('script')).innerHTML=s;
 var alert1 = {};
 alert1.settings = {enabled: false};
 //setup callback for after we have loaded our settings
-chrome.storage.local.get("settings",
+chrome.storage.local.get('settings',
   function (data) {
-    alert1.settings = data;
+    alert1.settings = data.settings;
     alert1_wrapper(alert1);
   }
 );

@@ -3,11 +3,11 @@ alert1 = {
     enabled: true,
   },
 
-  make_chrome_notification: function (page_title, func, stack_trace) {
+  make_chrome_notification: function (page_title, func, stack_trace, org_msg) {
     var nopts = {
       type: 'basic',
       iconUrl: 'img/icon/icon128.png',
-      title: page_title + ' ' + func,
+      title: page_title + ' --> ' + func + '(' + org_msg + ')',
       message: 'Click for stack trace...'
     };
     var ding = new Audio("lvlup.wav");
@@ -24,7 +24,7 @@ alert1 = {
     if (sender.url || sender.tab) {
       //display stack trace sent to us
       if (data.title && data.func && data.stack_trace) {
-        this.make_chrome_notification(data.title, data.func, data.stack_trace);
+        this.make_chrome_notification(data.title, data.func, data.stack_trace, data.org_msg);
       }
     }
   }
