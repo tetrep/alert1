@@ -1,5 +1,5 @@
 //wraps literally everthing, we don't do anything if we're not enabled
-alert1.init = function () { if (!(this.settings)) { this.load_settings(this.init.bind(this)); } if (this.settings.hooking_enabled) {
+alert1.init = function () {
 
 this.make_chrome_notification = function (data) {
   chrome.runtime.sendMessage(data, function(){});
@@ -79,48 +79,60 @@ this.get_stack_trace = function () {
 //listen for stack traces
 //make a nonce that we'll use to filter postmessages
 var nonce = Math.random().toString();
-window.addEventListener("message", function(event) {
+window.addEventListener("message", (function(event) {
   // We only accept messages from ourselves
   if (event.source != window)
     return;
 
   //match nonce and make sure all the data we need is available
   if (nonce == event.data.nonce && event.data.title && event.data.func && event.data.stack_trace && event.data.org_msg) {
-    alert1.make_chrome_notification(event.data);
+    console.log(event.data);
+    this.make_chrome_notification(event.data);
   } else {
     console.log('invalid message');
   }
-}, false);
+}).bind(this), false);
 
 //init string of JavaScript to inject
 var s = '';
 
-//we want to inject most of alert1
-var alert1_keys = Object.keys(alert1);
-var i = 0;
-s += 'var alert1 = {};\n';
-//pass objects
-for (i = 2; i < alert1_keys.length; i++)
-{
-  var key = alert1_keys[i];
-  var val = alert1[alert1_keys[i]].toString();
+var name = 'alert1';
+s += 'var '+name+' = {\n';
+  //we want to inject most of ourselves 
+  //skip the first 3 as they do not need to be injected
+  var alert1_keys = Object.keys(this);
+  var i = 0;
+  for (i = 3; i < alert1_keys.length; i++)
+  {
+    var key = alert1_keys[i];
+    var val = this[alert1_keys[i]].toString();
 
-  //don't serialize settings
-  if(key != 'settings') {
-    s += 'alert1[\''+key+'\'] = '+val+'\n';
+    s += key+': '+val+',\n';
   }
-}
 
-//inject a nonce so it's harder for pages to fuck with us
-s += 'var nonce = '+nonce+';\n';
-//we need to postmessage to ourselves to go from page -> content script
-s += 'var clsr = function (msg) { window.postMessage({ nonce: nonce, title: document.title, func: \'alert\', stack_trace: alert1.get_stack_trace(), org_msg: msg }, "*"); };\n';
-//hook alert(1) (via whitelist)
-s += 'alert1.hook_function(\'alert\', this, \'clsr\', this, true, [1]);\n';
+  //inject a nonce so it's harder for pages to fuck with us
+  s += 'nonce: '+nonce+',\n';
+  //we need to postmessage to ourselves to go from page -> content script
+  s += 'clsr: function (msg) {\n';
+    s += 'window.postMessage({\n';
+      s+= 'nonce: this.nonce, title: document.title, func: \'alert\', stack_trace: this.get_stack_trace(), org_msg: msg\n';
+    s += '}, "*");\n';
+  s += '},\n';
+  //hook alert(1) (via whitelist)
+  s += 'init: function (hook, hook_scope) {\n';
+    s += 'this.hook_function(hook, hook_scope, \'clsr\', this, true, [1]);\n';
+  s += '}\n';
+s += '};\n';
+s += name+'.init(\'alert\', this)\n';
 s += 'alert(1);\n';
 
 document.body.appendChild(document.createElement('script')).innerHTML=s;
 
-}}
+};
 
-alert1.init();
+//only do stuff if we're enabled
+alert1.load_settings((function () {
+  if (this.settings.hooking_enabled) {
+    this.init();
+  }
+}).bind(alert1));

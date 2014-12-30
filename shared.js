@@ -1,20 +1,24 @@
 alert1 = {
-  load_settings: function (cb) {
-    this.settings = {};
-
-    if(!cb) {
-      cb = this.init;
+  //cb is function to call after loading settings
+  //name is name of settings to load
+  load_settings: function (cb, name) {
+    if (!name) {
+      name = 'settings';
     }
 
+    this[name]= {};
+
     actual_cb = function (data) {
-      if (!(data.settings)) {
-        data.settings = {};
+      console.log('loaded: ');
+      console.log(data);
+      if (!(data[name])) {
+        data[name] = {};
       }
-      this.settings = data.settings;
+      this[name] = data[name];
       cb();
     };
     actual_cb = actual_cb.bind(this);
 
-    chrome.storage.local.get('settings', actual_cb);
+    chrome.storage.local.get(name, actual_cb);
   }
 };
