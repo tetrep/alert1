@@ -3,7 +3,7 @@
 
   "name": "alert1",
   "description": "Hooks alert to make notifications instead of pop-ups.",
-  "version": "0.3",
+  "version": "0.4",
 
   "permissions": [
     "notifications",
@@ -14,14 +14,14 @@
     {
       "matches": ["https://news.ycombinator.com/*"],
       //"matches": ["<all_urls>"],
-      "js": ["alert1_content.js"],
+      "js": ["shared.js", "content.js"],
       "run_at": "document_idle",
-      "match_about_blank": true
+      "all_frames": true
     }
   ],
 
   "background": {
-    "scripts": ["alert1_background.js"],
+    "scripts": ["shared.js", "background.js"],
     "persistent": false
   },
 
@@ -30,11 +30,13 @@
     "default_popup": "popup.html"
   },
 
+  "options_page": "options.html",
+
   "icons": {
-    "16": "img/icon/icon16.png",
-    "32": "img/icon/icon32.png",
-    "48": "img/icon/icon48.png",
-    "64": "img/icon/icon64.png",
+    "16":  "img/icon/icon16.png",
+    "32":  "img/icon/icon32.png",
+    "48":  "img/icon/icon48.png",
+    "64":  "img/icon/icon64.png",
     "128": "img/icon/icon128.png"
   }
 }
