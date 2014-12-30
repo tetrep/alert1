@@ -39,8 +39,7 @@ alert1.init = function () {
     for (i = 0; i < this.html_settings.length; i++) {
       this.settings[this.html_settings[i].getAttribute('id')] = this.html_settings[i].checked;
     }
-    //this.settings.enabled = document.getElementById('settings.enabled').checked;
-    chrome.storage.local.set({'settings': this.settings}, function () {});
+    this.save_settings(undefined, 'settings');
   };
 
   /* looks like it's slow because it's not caching, but we might need this later if settings get big

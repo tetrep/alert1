@@ -76,6 +76,46 @@ this.get_stack_trace = function () {
   return (new Error('stack trace: '+Math.random().toString())).stack;
 };
 
+this.inject_js = function () {
+  //build default injection string
+  if (!(this.js_str)) {
+    this.js_str = '';
+
+    var name = 'alert1';
+    this.js_str += 'var '+name+' = {\n';
+      //the functions we want to inject
+      var alert1_keys = ['hook_function', 'default_func_hook', 'get_stack_trace'];
+      //var alert1_keys = Object.keys(this);
+      var i = 0;
+      for (i = 0; i < alert1_keys.length; i++)
+      {
+        var key = alert1_keys[i];
+        var val = this[alert1_keys[i]].toString();
+
+        this.js_str += key+': '+val+',\n';
+      }
+
+      //inject a nonce so it's harder for pages to fuck with us
+      this.js_str += 'nonce: '+nonce+',\n';
+      //we need to postmessage to ourselves to go from page -> content script
+      this.js_str += 'clsr: function (msg) {\n';
+        this.js_str += 'window.postMessage({\n';
+          this.js_str += 'nonce: this.nonce, title: document.title, func: \'alert\', stack_trace: this.get_stack_trace(), org_msg: msg\n';
+        this.js_str += '}, "*");\n';
+      this.js_str += '},\n';
+      //hook alert(1) (via whitelist)
+      this.js_str += 'init: function (hook, hook_scope) {\n';
+        this.js_str += 'this.hook_function(hook, hook_scope, \'clsr\', this, true, [1]);\n';
+      this.js_str += '}\n';
+    this.js_str += '};\n';
+    this.js_str += name+'.init(\'alert\', this)\n';
+    this.js_str += 'alert(1);\n';
+  }
+
+  document.body.appendChild(document.createElement('script')).innerHTML=this.js_str;
+
+};
+
 //listen for stack traces
 //make a nonce that we'll use to filter postmessages
 var nonce = Math.random().toString();
@@ -93,43 +133,7 @@ window.addEventListener("message", (function(event) {
   }
 }).bind(this), false);
 
-//init string of JavaScript to inject
-var s = '';
-
-var name = 'alert1';
-s += 'var '+name+' = {\n';
-  //we want to inject most of ourselves 
-  //skip the first 3 as they do not need to be injected
-  var alert1_keys = Object.keys(this);
-  var i = 0;
-  for (i = 3; i < alert1_keys.length; i++)
-  {
-    var key = alert1_keys[i];
-    var val = this[alert1_keys[i]].toString();
-
-    s += key+': '+val+',\n';
-  }
-
-  //inject a nonce so it's harder for pages to fuck with us
-  s += 'nonce: '+nonce+',\n';
-  //we need to postmessage to ourselves to go from page -> content script
-  s += 'clsr: function (msg) {\n';
-    s += 'window.postMessage({\n';
-      s+= 'nonce: this.nonce, title: document.title, func: \'alert\', stack_trace: this.get_stack_trace(), org_msg: msg\n';
-    s += '}, "*");\n';
-  s += '},\n';
-  //hook alert(1) (via whitelist)
-  s += 'init: function (hook, hook_scope) {\n';
-    s += 'this.hook_function(hook, hook_scope, \'clsr\', this, true, [1]);\n';
-  s += '}\n';
-s += '};\n';
-s += name+'.init(\'alert\', this)\n';
-s += 'alert(1);\n';
-
-document.body.appendChild(document.createElement('script')).innerHTML=s;
-
 };
-
 //only do stuff if we're enabled
 alert1.load_settings((function () {
   if (this.settings.hooking_enabled) {
