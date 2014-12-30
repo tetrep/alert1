@@ -21,6 +21,7 @@ alert1.init = function () {
 
   this.recv_msg = function (data, sender) {
     this.load_settings( (function () {
+      if (!(this.settings.hooking_enabled)) { return; }
       //check if coming from a tab
       if (sender.url || sender.tab) {
         //display stack trace sent to us
