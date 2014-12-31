@@ -13,28 +13,23 @@ this.enable_hooked_functions = function (hooked_functions) {
 }
 
 this.enable_hooked_function = function (hooked_function) {
-  //give scope to functions
-  hooked_function.target = hooked_function.target.bind(hooked_function.target_scope);
+  //eval to get scope
+  hooked_function = this.eval_hooked_function_scope(hooked_function);
+
+  //convert strings to functions
+  hooked_function.target = (hooked_function.target_scope)[hooked_function.target].bind(hooked_function.target_scope);
   //hooked_function.hook = hooked_function.hook.bind(hooked_function.hook_scope);
-  hooked_function.hook = hooked_function.hook.bind(hooked_function);
+  hooked_function.hook = (hooked_function.hook_scope)[hooked_function.hook].bind(hooked_function);
   hooked_function.hook_wrapper = hooked_function.hook_wrapper.bind(hooked_function);
 
   //actually hook the function
   hooked_function.target_scope[hooked_function.target] = hooked_function.hooked_wrapper;
 }
 
-this.eval_hooked_function_scopes = function (hooked_functions) {
-  var i = 0;
-  for (i = 0; i < hooked_functions.length; i++) {
-    hooked_functions[i] = this.eval_hooked_function_scope(hooked_functions[i]);
-  }
-
-  return temp;
-}
-
 this.eval_hooked_function_scope = function (hooked_function) {
   eval('hooked_function.target_scope = ' + hooked_function.target_scope);
   eval('hooked_function.hook_scope = ' + hooked_function.hook_scope);
+  eval('hooked_function.hook_wrapper = this.' + hooked_function.hook_wrapper);
 
   return hooked_function;
 }
@@ -84,7 +79,6 @@ this.inject_js = function () {
     var alert1_keys = [
       'enable_hooked_functions',
       'enable_hooked_function',
-      'eval_hooked_function_scopes',
       'eval_hooked_function_scope',
       'hook_wrapper',
       'get_stack_trace'
@@ -145,16 +139,16 @@ this.inject_js = function () {
     this.content.hook_init_js = '';
     this.content.hook_init_js += this.content.obj_name+'.init = function () {\n';
       //totes nasty
-      this.content.hook_init_js += 'this.enable_hooked_functions(this.eval_hooked_functions('+this.content.hooked_functions_json+'));\n';
+      this.content.hook_init_js += 'this.enable_hooked_functions('+this.content.hooked_functions_json+');\n';
     this.content.hook_init_js += '};\n';
   }
 
   if (save) {
-    console.log(this.content);
+    //console.log(this.content);
     //this.save_settings(undefined, 'content');
   }
 
-  document.body.appendChild(document.createElement('script')).innerHTML = this.content.obj_js + this.content.hook_js + this.content.hook_init_js + this.content.obj_name+'.init.bind('+this.content.obj_name+');\n';
+  document.body.appendChild(document.createElement('script')).innerHTML = this.content.obj_js + this.content.hook_js + this.content.hook_init_js + this.content.obj_name+'.init.bind('+this.content.obj_name+')();\n';
 };
 
 //listen for stack traces
