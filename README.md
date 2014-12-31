@@ -12,5 +12,4 @@ We're relying upon Chrome's ability to convert functions into valid JavaScript s
 
 ## todo
 - expose more configuration options
-- refactor content.js so we can pull injected string from storage (if it's not stale)
 - add add more details to notifications/stack traces?
