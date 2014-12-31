@@ -6,30 +6,30 @@ this.make_chrome_notification = function (data) {
 };
 
 this.enable_hooked_functions = function (hooked_functions) {
-  var i = 0;
-  for (i = 0; i < hooked_functions.length; i++) {
-    this.enable_hooked_function(hooked_functions[i]);
-  }
+  hooked_functions.map(this.enable_hooked_function, this);
 }
 
 this.enable_hooked_function = function (hooked_function) {
   //eval to get scope
   hooked_function = this.eval_hooked_function_scope(hooked_function);
 
-  //convert strings to functions
+  //save string so we can reference target again
+  var target_str = hooked_function.target
+
+  //bind scopes of functions, functions are strings so we need to access like a map
   hooked_function.target = (hooked_function.target_scope)[hooked_function.target].bind(hooked_function.target_scope);
-  //hooked_function.hook = hooked_function.hook.bind(hooked_function.hook_scope);
   hooked_function.hook = (hooked_function.hook_scope)[hooked_function.hook].bind(hooked_function);
-  hooked_function.hook_wrapper = hooked_function.hook_wrapper.bind(hooked_function);
+  hooked_function.hook_wrapper = (this)[hooked_function.hook_wrapper].bind(hooked_function);
+  //add stack trace function
+  hooked_function.get_stack_trace = this.get_stack_trace;
 
   //actually hook the function
-  hooked_function.target_scope[hooked_function.target] = hooked_function.hooked_wrapper;
+  (hooked_function.target_scope)[target_str] = hooked_function.hook_wrapper.bind(hooked_function);
 }
 
 this.eval_hooked_function_scope = function (hooked_function) {
   eval('hooked_function.target_scope = ' + hooked_function.target_scope);
   eval('hooked_function.hook_scope = ' + hooked_function.hook_scope);
-  eval('hooked_function.hook_wrapper = this.' + hooked_function.hook_wrapper);
 
   return hooked_function;
 }
@@ -39,27 +39,29 @@ this.hook_wrapper = function (input) {
   var blacklist_pass = true;
 
   //check whitelist
-  if (this.settings.whitelist) {
-    if (-1 == this.settings.whitelist.indexOf(input)) {
+  if (this.whitelist) {
+    if (-1 == this.whitelist.indexOf(input)) {
+      console.log('whitelist fail');
       whitelist_pass = false;
     }
   }
   //check blacklist
-  if (this.settings.blacklist) {
-    if (-1 != this.settings.blacklist.indexOf(input)) {
+  if (this.blacklist) {
+    if (-1 != this.blacklist.indexOf(input)) {
+      console.log('blacklist fail');
       blacklist_pass = false;
     }
   }
 
   //only hook if we passed whitelist and blacklist
   if (whitelist_pass && blacklist_pass) {
-    console.log('calling new function');
-    return this.func_new(input);
+    console.log('calling hook function');
+    return this.hook(input);
   }
   //we don't want to hook this input if we failed white/blacklist
   else {
-    console.log('calling old function');
-    return this.func_old(input);
+    console.log('calling original function');
+    return this.target(input);
   }
 };
 
@@ -106,7 +108,7 @@ this.inject_js = function () {
       hook: 'hook',
       hook_scope: 'this',
       hook_wrapper: 'hook_wrapper',
-      whitelist: ['1'],
+      whitelist: [1],
       nonce: this.nonce
     });
 
@@ -127,6 +129,7 @@ this.inject_js = function () {
     //we need to postmessage ourselves to go from page -> content script
     this.content.hook_js = '';
     this.content.hook_js += this.content.obj_name+'.hook = function (msg) {\n';
+      this.content.hook_js += 'console.log(this);\n';
       this.content.hook_js += 'window.postMessage({\n';
         this.content.hook_js += 'nonce: this.nonce, title: document.title, func: this.target_scope+\'.\'+this.target, stack_trace: this.get_stack_trace(), org_msg: msg\n';
       this.content.hook_js += '}, "*");\n';
