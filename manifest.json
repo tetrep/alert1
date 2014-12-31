@@ -3,7 +3,7 @@
 
   "name": "alert1",
   "description": "Hooks `alert` to make notifications instead of pop-ups.",
-  "version": "0.5",
+  "version": "0.7",
 
   "permissions": [
     "notifications",

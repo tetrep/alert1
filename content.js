@@ -10,11 +10,16 @@ this.enable_hooked_functions = function (hooked_functions) {
 }
 
 this.enable_hooked_function = function (hooked_function) {
+  //set nonce
+  hooked_function.nonce = this.nonce;
+
+  //save string so we can reference target again
+  hooked_function.target_str = hooked_function.target
+  hooked_function.target_scope_str = hooked_function.target_scope;
+
   //eval to get scope
   hooked_function = this.eval_hooked_function_scope(hooked_function);
 
-  //save string so we can reference target again
-  var target_str = hooked_function.target
 
   //bind scopes of functions, functions are strings so we need to access like a map
   hooked_function.target = (hooked_function.target_scope)[hooked_function.target].bind(hooked_function.target_scope);
@@ -24,7 +29,7 @@ this.enable_hooked_function = function (hooked_function) {
   hooked_function.get_stack_trace = this.get_stack_trace;
 
   //actually hook the function
-  (hooked_function.target_scope)[target_str] = hooked_function.hook_wrapper.bind(hooked_function);
+  (hooked_function.target_scope)[hooked_function.target_str] = hooked_function.hook_wrapper.bind(hooked_function);
 }
 
 this.eval_hooked_function_scope = function (hooked_function) {
@@ -98,6 +103,9 @@ this.inject_js = function () {
     this.content.obj_js += '};\n';
   }
 
+  //fresh nonce every time
+  var nonce_js = this.content.obj_name+'.nonce = '+this.nonce+';\n';
+
   //default hooked function settings, hooks calls to alert(1)
   if (!(this.content.hooked_functions_json)) {
     save = true;
@@ -109,29 +117,21 @@ this.inject_js = function () {
       hook_scope: 'this',
       hook_wrapper: 'hook_wrapper',
       whitelist: [1],
-      nonce: this.nonce
     });
 
     this.content.hooked_functions_json = JSON.stringify(hooked_functions);
-  } else {
-    //we always need a fresh nonce
-    var hooked_functions = JSON.parse(this.content.hooked_functions_json);
-    var i = 0;
-    for (i = 0; i < hooked_functions.length; i++) {
-      hooked_functions[i].nonce = this.nonce;
-    }
-
-    this.content.hooked_functions_json = JSON.stringify(hooked_functions);
   }
+
+  //give it to our injected structure
+  var hooked_functions_js = this.content.obj_name+'.hooked_functions = '+this.content.hooked_functions_json+';\n';
 
   if (!(this.content.hook_js)) {
     save = true;
     //we need to postmessage ourselves to go from page -> content script
     this.content.hook_js = '';
     this.content.hook_js += this.content.obj_name+'.hook = function (msg) {\n';
-      this.content.hook_js += 'console.log(this);\n';
       this.content.hook_js += 'window.postMessage({\n';
-        this.content.hook_js += 'nonce: this.nonce, title: document.title, func: this.target_scope+\'.\'+this.target, stack_trace: this.get_stack_trace(), org_msg: msg\n';
+        this.content.hook_js += 'nonce: this.nonce, title: document.title, func: this.target_scope_str+\'.\'+this.target_str, stack_trace: this.get_stack_trace(), org_msg: msg\n';
       this.content.hook_js += '}, "*");\n';
     this.content.hook_js += '};\n';
   }
@@ -141,17 +141,16 @@ this.inject_js = function () {
     //enable all our function hooks
     this.content.hook_init_js = '';
     this.content.hook_init_js += this.content.obj_name+'.init = function () {\n';
-      //totes nasty
-      this.content.hook_init_js += 'this.enable_hooked_functions('+this.content.hooked_functions_json+');\n';
+      this.content.hook_init_js += 'this.enable_hooked_functions(this.hooked_functions);\n';
     this.content.hook_init_js += '};\n';
   }
 
   if (save) {
     //console.log(this.content);
-    //this.save_settings(undefined, 'content');
+    this.save_settings(undefined, 'content');
   }
 
-  document.body.appendChild(document.createElement('script')).innerHTML = this.content.obj_js + this.content.hook_js + this.content.hook_init_js + this.content.obj_name+'.init.bind('+this.content.obj_name+')();\n';
+  document.body.appendChild(document.createElement('script')).innerHTML = this.content.obj_js + nonce_js + hooked_functions_js + this.content.hook_js + this.content.hook_init_js + this.content.obj_name+'.init.bind('+this.content.obj_name+')();\n';
 };
 
 //listen for stack traces

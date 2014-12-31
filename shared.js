@@ -41,5 +41,14 @@ alert1 = {
     console.log(data);
 
     chrome.storage.local.set(data, cb);
+  },
+
+  clear_all_settings: function () {
+    this.clear_settings();
+  },
+
+  clear_settings: function (cb, name) {
+    console.log('clearing: ' + name);
+    chrome.storage.local.remove(name, cb);
   }
 };
