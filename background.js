@@ -25,7 +25,7 @@ alert1.init = function () {
       //check if coming from a tab
       if (sender.url || sender.tab) {
         //display stack trace sent to us
-        if (data.title && data.func && data.stack_trace && data.org_msg) {
+        if (data.func && data.stack_trace) {
           this.make_chrome_notification(data.title, data.func, data.stack_trace, data.org_msg);
         } else {
           console.log('invalid message format');

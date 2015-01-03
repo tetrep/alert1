@@ -12,17 +12,22 @@ alert1 = {
   //name is name of settings to load
   load_settings: function (cb, name) {
     cb = this.default_arg(cb, function () {});
-    name = this.default_arg(name, 'settings');
+    name = this.default_arg(name, ['settings']);
 
-    this[name]= {};
+    //so we can always map()
+    if (!(name.constructor === Array)) {
+      name = [name];
+    }
 
     actual_cb = function (data) {
       console.log('loading:');
       console.log(data);
-      if (!(data[name])) {
-        data[name] = {};
-      }
-      this[name] = data[name];
+      name.map(function (tmp) {
+          //make empty objects for undefined keys
+          if (!(this[tmp] = data[tmp])) {
+            this[tmp] = {};
+          }
+        }, this);
       cb();
     };
     actual_cb = actual_cb.bind(this);

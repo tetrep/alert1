@@ -130,9 +130,9 @@ this.inject_js = function () {
     //we need to postmessage ourselves to go from page -> content script
     this.content.hook_js = '';
     this.content.hook_js += this.content.obj_name+'.hook = function (msg) {\n';
-      this.content.hook_js += 'window.postMessage({\n';
-        this.content.hook_js += 'nonce: this.nonce, title: document.title, func: this.target_scope_str+\'.\'+this.target_str, stack_trace: this.get_stack_trace(), org_msg: msg\n';
-      this.content.hook_js += '}, "*");\n';
+      this.content.hook_js += '  window.postMessage({\n';
+        this.content.hook_js += '    nonce: this.nonce, title: document.title, func: this.target_scope_str+\'.\'+this.target_str, stack_trace: this.get_stack_trace(), org_msg: msg\n';
+      this.content.hook_js += '  }, "*");\n';
     this.content.hook_js += '};\n';
   }
 
@@ -141,7 +141,7 @@ this.inject_js = function () {
     //enable all our function hooks
     this.content.hook_init_js = '';
     this.content.hook_init_js += this.content.obj_name+'.init = function () {\n';
-      this.content.hook_init_js += 'this.enable_hooked_functions(this.hooked_functions);\n';
+      this.content.hook_init_js += '  this.enable_hooked_functions(this.hooked_functions);\n';
     this.content.hook_init_js += '};\n';
   }
 
@@ -162,19 +162,39 @@ window.addEventListener("message", (function(event) {
     return;
 
   //match nonce and make sure all the data we need is available
-  if (this.nonce == event.data.nonce && event.data.title && event.data.func && event.data.stack_trace && event.data.org_msg) {
-    console.log(event.data);
+  if (this.nonce == event.data.nonce && event.data.func && event.data.stack_trace) {
+    console.log('valid message:');
+    console.log(event);
     this.make_chrome_notification(event.data);
   } else {
-    console.log('invalid message');
+    console.log('invalid message:');
+    console.log(event);
   }
 }).bind(this), false);
 
-this.load_settings(this.inject_js.bind(this), 'content');
+this.inject_js();
 };
+
+//check if our domain is in scope
+alert1.check_scope_whitelist = function () {
+  if (!this.content.scope_whitelist) {
+    this.content.scope_whitelist = "[]";
+  }
+  re_strs = JSON.parse(this.content.scope_whitelist);
+  var i = 0;
+  for (i = 0; i < re_strs.length; i++) {
+    regex = new RegExp(re_strs[i]);
+    if (regex.exec(window.location)) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
 //only do stuff if we're enabled
 alert1.load_settings((function () {
-  if (this.settings.hooking_enabled) {
+  if (this.settings.hooking_enabled && this.check_scope_whitelist()) {
     this.init();
   }
-}).bind(alert1));
+}).bind(alert1), ['settings', 'content']);

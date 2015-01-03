@@ -2,7 +2,7 @@
   "manifest_version": 2,
 
   "name": "alert1",
-  "description": "Hooks `alert` to make notifications instead of pop-ups.",
+  "description": "Hooks `alert(1)` to make notifications instead of pop-ups.",
   "version": "0.7",
 
   "permissions": [
@@ -12,7 +12,7 @@
 
   "content_scripts": [
     {
-      "matches": ["https://news.ycombinator.com/*"],
+      "matches": ["http://indoril.blacksheepwall.com/*"],
       //"matches": ["<all_urls>"],
       "js": ["shared.js", "content.js"],
       "run_at": "document_idle",

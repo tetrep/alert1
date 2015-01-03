@@ -1,6 +1,6 @@
 alert1.init = function() {
   this.html_settings = [];
-  this.content_keys = ['obj_name', 'obj_js', 'hooked_functions_json', 'hook_js', 'hook_init_js'];
+  this.content_keys = ['scope_whitelist', 'obj_name', 'obj_js', 'hooked_functions_json', 'hook_js', 'hook_init_js'];
 
   this.make_html = function () {
     //make a shitty save button
@@ -31,17 +31,25 @@ alert1.init = function() {
     var text = document.createElement('textarea');
     text.setAttribute('id', id);
     text.setAttribute('rows', '15');
-    text.setAttribute('cols', '120');
+    text.setAttribute('cols', '135');
     if (this.content[id]) {
       text.innerHTML = this.content[id];
     } else {
-      text.innerText = name;
+      text.setAttribute('placeholder', name);
     }
 
-    var div = document.createElement('div');
+    var desc = document.createElement('p');
+    desc.style.width = '250px';
+    desc.innerText = this.descriptions[name];
 
-    div.appendChild(text);
-    document.body.appendChild(div);
+    var table = document.createElement('table');
+    var tr = table.appendChild(document.createElement('tr'));
+    var td = tr.appendChild(document.createElement('td'));
+    var td2 = tr.appendChild(document.createElement('td'));
+
+    td.appendChild(text);
+    td2.appendChild(desc);
+    document.body.appendChild(table);
   };
 
   this.update_settings = function () {
