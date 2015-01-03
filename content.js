@@ -46,26 +46,26 @@ this.hook_wrapper = function (input) {
   //check whitelist
   if (this.whitelist) {
     if (-1 == this.whitelist.indexOf(input)) {
-      console.log('whitelist fail');
+      //console.log('whitelist fail');
       whitelist_pass = false;
     }
   }
   //check blacklist
   if (this.blacklist) {
     if (-1 != this.blacklist.indexOf(input)) {
-      console.log('blacklist fail');
+      //console.log('blacklist fail');
       blacklist_pass = false;
     }
   }
 
   //only hook if we passed whitelist and blacklist
   if (whitelist_pass && blacklist_pass) {
-    console.log('calling hook function');
+    //console.log('calling hook function');
     return this.hook(input);
   }
   //we don't want to hook this input if we failed white/blacklist
   else {
-    console.log('calling original function');
+    //console.log('calling original function');
     return this.target(input);
   }
 };
@@ -163,12 +163,12 @@ window.addEventListener("message", (function(event) {
 
   //match nonce and make sure all the data we need is available
   if (this.nonce == event.data.nonce && event.data.func && event.data.stack_trace) {
-    console.log('valid message:');
-    console.log(event);
+    //console.log('valid message:');
+    //console.log(event);
     this.make_chrome_notification(event.data);
   } else {
-    console.log('invalid message:');
-    console.log(event);
+    //console.log('invalid message:');
+    //console.log(event);
   }
 }).bind(this), false);
 

@@ -20,8 +20,8 @@ alert1 = {
     }
 
     actual_cb = function (data) {
-      console.log('loading:');
-      console.log(data);
+      //console.log('loading:');
+      //console.log(data);
       name.map(function (tmp) {
           //make empty objects for undefined keys
           if (!(this[tmp] = data[tmp])) {
@@ -42,8 +42,8 @@ alert1 = {
     data = {};
     data[name] = this[name];
 
-    console.log('saving:');
-    console.log(data);
+    //console.log('saving:');
+    //console.log(data);
 
     chrome.storage.local.set(data, cb);
   },
