@@ -8,8 +8,15 @@ alert1.init = function () {
     };
 
     if(this.settings.sound_enabled) {
-      var ding = new Audio("lvlup.wav");
-      ding.play();
+      var sound = {};
+
+      if (this.settings.tutturuu) {
+        var sound = new Audio('audio/tutturuu.wav');
+      } else {
+        var sound = new Audio('audio/lvlup.wav');
+      }
+
+      sound.play();
     }
 
     chrome.notifications.create(stack_trace, nopts, function(){});

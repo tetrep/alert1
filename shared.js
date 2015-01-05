@@ -10,6 +10,7 @@ alert1 = {
 
   //cb is function to call after loading settings
   //name is name of settings to load
+  //call without arguments to load `this.settings`
   load_settings: function (cb, name) {
     cb = this.default_arg(cb, function () {});
     name = this.default_arg(name, ['settings']);
@@ -35,6 +36,9 @@ alert1 = {
     chrome.storage.local.get(name, actual_cb);
   },
 
+  //cb is function to call after saving settings
+  //name is name of settings to save 
+  //call without arguments to save `this.settings`
   save_settings: function (cb, name) {
     cb = this.default_arg(cb, function () {});
     name = this.default_arg(name, 'settings');
@@ -48,10 +52,13 @@ alert1 = {
     chrome.storage.local.set(data, cb);
   },
 
+  //wipes all settings
   clear_all_settings: function () {
     this.clear_settings();
   },
 
+  //cb is function to call after removing object
+  //name is key of object to remove from settings
   clear_settings: function (cb, name) {
     console.log('clearing: ' + name);
     chrome.storage.local.remove(name, cb);
