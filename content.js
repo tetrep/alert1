@@ -150,7 +150,15 @@ this.inject_js = function () {
     this.save_settings(undefined, 'content');
   }
 
-  document.head.appendChild(document.createElement('script')).innerHTML = this.content.obj_js + nonce_js + hooked_functions_js + this.content.hook_js + this.content.hook_init_js + this.content.obj_name+'.init.bind('+this.content.obj_name+')();\n';
+  // inject before the first child of head
+  var injected_js_element;
+  if (document.head.childNodes.length != 0) {
+    injected_js_element = document.head.insertBefore(document.createElement('script'), document.head.childNodes[0]);
+  } else {
+    injected_js_element = document.head.appendChild(document.createElement('script'));
+  }
+
+  injected_js_element.innerHTML = this.content.obj_js + nonce_js + hooked_functions_js + this.content.hook_js + this.content.hook_init_js + this.content.obj_name+'.init.bind('+this.content.obj_name+')();\n';
 };
 
 //listen for stack traces
