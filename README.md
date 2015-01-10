@@ -5,7 +5,7 @@ Chrome extension that hooks the `alert` function to replace the pop-ups with des
 ## install
 
 ## update
-Settings are static now, the extension is always on, sound is always off, and all pages are injected into. If you want to changed any of this do so via the `settings.json` and `content.json` files.
+The extension is always injected into the page. If disabled via the pop-up, notifications will stop but the content script will still inject and hook `alert(1)`. To change this, manually edit the `settings.json` and `content.json` files.
 
 Download the repo and load it as an unpacked extension. Edit the top box in the extension's options page to contain a JavaScript array of regex strings, i.e. if you want to load the extension on all pages, use `["."]`. Save your settings. Enable/disable (it's disabled by default) the extension via its icon's pop-up.
 
