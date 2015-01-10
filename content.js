@@ -150,15 +150,19 @@ this.inject_js = function () {
     this.save_settings(undefined, 'content');
   }
 
-  // inject before the first child of head
-  var injected_js_element;
-  if (document.head.childNodes.length != 0) {
-    injected_js_element = document.head.insertBefore(document.createElement('script'), document.head.childNodes[0]);
-  } else {
-    injected_js_element = document.head.appendChild(document.createElement('script'));
-  }
+  // build the final string we will inject
+  var injected_js_element_str = this.content.obj_js + nonce_js + hooked_functions_js + this.content.hook_js + this.content.hook_init_js + this.content.obj_name+'.init.bind('+this.content.obj_name+')();\n';
 
-  injected_js_element.innerHTML = this.content.obj_js + nonce_js + hooked_functions_js + this.content.hook_js + this.content.hook_init_js + this.content.obj_name+'.init.bind('+this.content.obj_name+')();\n';
+  // our script element
+  var injected_js_element = document.createElement('script');
+  injected_js_element.innerHTML = injected_js_element_str;
+
+  // inject asap
+  if (document.childNodes[0].childNodes.length != 0) {
+    document.insertBefore(injected_js_element, document.childNodes[0].childNodes[0]);
+  } else {
+    document.childNodes[0].appendChild(injected_js_element);
+  }
 };
 
 //listen for stack traces
@@ -201,8 +205,27 @@ alert1.check_scope_whitelist = function () {
 };
 
 //only do stuff if we're enabled
+/* looks like async won't work if XSS happens "too soon" in page
 alert1.load_settings((function () {
   if (this.settings.hooking_enabled && this.check_scope_whitelist()) {
     this.init();
   }
 }).bind(alert1), ['settings', 'content']);
+*/
+// let's try loading settings from a file, synchronously
+var xhr = new XMLHttpRequest();
+xhr.open('get', chrome.runtime.getURL('settings.json'), false);
+xhr.send();
+var settings_json = JSON.parse(xhr.responseText);
+alert1.settings = settings_json;
+
+// and now for content
+xhr = new XMLHttpRequest();
+xhr.open('get', chrome.runtime.getURL('content.json'), false);
+xhr.send();
+var content_json = JSON.parse(xhr.responseText);
+alert1.content = content_json;
+
+if (alert1.settings.hooking_enabled && alert1.check_scope_whitelist()) {
+  alert1.init();
+}
