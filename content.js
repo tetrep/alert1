@@ -158,10 +158,14 @@ this.inject_js = function () {
   injected_js_element.innerHTML = injected_js_element_str;
 
   // inject asap
-  if (document.childNodes[1].childNodes.length != 0) {
-    document.insertBefore(injected_js_element, document.childNodes[0].childNodes[0]);
+  var temp_node;
+  if (!(temp_node = document.childNodes[1])) {
+    temp_node = document.childNodes[0];
+  }
+  if (temp_node.childNodes.length != 0) {
+      document.insertBefore(injected_js_element, temp_node.childNodes[0]);
   } else {
-    document.childNodes[1].appendChild(injected_js_element);
+    temp_node.appendChild(injected_js_element);
   }
 };
 
