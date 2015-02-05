@@ -224,6 +224,7 @@ window.addEventListener("message", (function(event) {
   if (this.nonce == event.data.nonce && event.data.func && event.data.stack_trace) {
     //console.log('valid message:');
     //console.log(event);
+    event.data.location = event.source.location
     this.make_chrome_notification(event.data);
   } else {
     //console.log('invalid message:');
@@ -234,7 +235,7 @@ window.addEventListener("message", (function(event) {
 this.inject_js();
 };
 
-//check if our domain is in scope
+// check if our domain is in scope
 alert1.check_scope_whitelist = function () {
   if (!this.content.scope_whitelist) {
     this.content.scope_whitelist = "[]";
@@ -264,23 +265,3 @@ alert1.load_settings((function () {
   }
   this.post_init();
 }).bind(alert1), ['settings', 'content']);
-
-// let's try loading settings from a file, synchronously
-/*
-var xhr = new XMLHttpRequest();
-xhr.open('get', chrome.runtime.getURL('settings.json'), false);
-xhr.send();
-var settings_json = JSON.parse(xhr.responseText);
-alert1.settings = settings_json;
-
-// and now for content
-xhr = new XMLHttpRequest();
-xhr.open('get', chrome.runtime.getURL('content.json'), false);
-xhr.send();
-var content_json = JSON.parse(xhr.responseText);
-alert1.content = content_json;
-
-if (alert1.settings.hooking_enabled && alert1.check_scope_whitelist()) {
-  alert1.init();
-}
-*/

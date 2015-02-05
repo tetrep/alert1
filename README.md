@@ -22,3 +22,4 @@ We're (semi-)relying upon Chrome's ability to convert functions into valid JavaS
 ## todo
 - make options page pretty
 - add add more details to notifications/stack traces?
+- cleanup content.js

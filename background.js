@@ -1,10 +1,10 @@
 alert1.init = function () {
-  this.make_chrome_notification = function (page_title, func, stack_trace, org_msg) {
+  this.make_chrome_notification = function (data) {
     var nopts = {
       type: 'basic',
       iconUrl: 'img/icon/icon128.png',
-      title: page_title+' --> '+func+'('+org_msg+')',
-      message: 'Click for stack trace...'
+      title: data.page_title+' --> '+data.func+'('+data.org_msg+')',
+      message: 'Click for details...'
     };
 
     if(this.settings.sound_enabled) {
@@ -19,7 +19,7 @@ alert1.init = function () {
       sound.play();
     }
 
-    chrome.notifications.create(stack_trace, nopts, function(){});
+    chrome.notifications.create(JSON.stringify(data.location.href)+'\n'+data.stack_trace, nopts, function(){});
   };
 
   this.display_stack_trace = function (nid) {
@@ -33,7 +33,7 @@ alert1.init = function () {
       if (sender.url || sender.tab) {
         //display stack trace sent to us
         if (data.func && data.stack_trace) {
-          this.make_chrome_notification(data.title, data.func, data.stack_trace, data.org_msg);
+          this.make_chrome_notification(data);
         } else {
           console.log('invalid message format');
         }
