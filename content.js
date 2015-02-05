@@ -35,7 +35,6 @@ this.inject_script_element(pre_load_js_element);
 alert1.post_init = function () {
 // process the alert queue
 this.post_load_settings = function () {
-  throw "weee";
   var i = 0;
   for (i = 0; i < this.alert_queue.length; i++) {
     alert(this.alert_queue[i]);
