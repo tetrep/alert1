@@ -1,3 +1,55 @@
+// wraps what we need to pre load
+alert1.pre_init = function () {
+// we need to inject JS to make sure alerts don't get made before we can load our settings
+this.inject_script_element = function (script) {
+  // inject asap
+  var temp_node;
+  if (!(temp_node = document.childNodes[1])) {
+    temp_node = document.childNodes[0];
+  }
+  if (temp_node.childNodes.length != 0 && temp_node.childNodes[0].tagName != 'SCRIPT') {
+      document.insertBefore(script, temp_node.childNodes[0]);
+  } else {
+    temp_node.appendChild(script);
+  }
+};
+
+// make an alert queue that we'll operate on once we load settings
+this.pre_load_settings = function () {
+  this.alert_queue = [];
+  this.alert_queue_wrapper = function (msg) {
+    this.alert_queue.push(msg);
+  }
+  this.alert_bak = alert;
+  alert = this.alert_queue_wrapper.bind(this);
+};
+
+// prep a script element that will make an alert queue so we don't miss any alerts
+// while we wait for our settings to load (hooray forced async!)
+var pre_load_js_element = document.createElement('script');
+var pre_load_js_str = 'var alert1_pre = {};('+this.pre_load_settings.toString()+').bind(alert1_pre)();';
+pre_load_js_element.innerHTML = pre_load_js_str;
+this.inject_script_element(pre_load_js_element);
+};
+
+alert1.post_init = function () {
+// process the alert queue
+this.post_load_settings = function () {
+  throw "weee";
+  var i = 0;
+  for (i = 0; i < this.alert_queue.length; i++) {
+    alert(this.alert_queue[i]);
+  }
+};
+
+// process the alert queue
+var post_load_js_element = document.createElement('script');
+var post_load_js_str = '('+this.post_load_settings.toString()+').bind(alert1_pre)();';
+post_load_js_element.innerHTML = post_load_js_str;
+this.inject_script_element(post_load_js_element);
+};
+
+
 //wraps literally everthing, we don't do anything if we're not enabled
 alert1.init = function () {
 
@@ -158,15 +210,7 @@ this.inject_js = function () {
   injected_js_element.innerHTML = injected_js_element_str;
 
   // inject asap
-  var temp_node;
-  if (!(temp_node = document.childNodes[1])) {
-    temp_node = document.childNodes[0];
-  }
-  if (temp_node.childNodes.length != 0) {
-      document.insertBefore(injected_js_element, temp_node.childNodes[0]);
-  } else {
-    temp_node.appendChild(injected_js_element);
-  }
+  this.inject_script_element(injected_js_element);
 };
 
 //listen for stack traces
@@ -208,15 +252,22 @@ alert1.check_scope_whitelist = function () {
   return false;
 };
 
-//only do stuff if we're enabled
-/* looks like async won't work if XSS happens "too soon" in page
+// setup to make sure we don't miss alerts while waiting for settings
+alert1.pre_init();
+// only do stuff if we're enabled
 alert1.load_settings((function () {
+  // restore alert after we hooked it to make a queue of alerts that occur before we load our settings
+  var restore_alert_element = document.createElement('script');
+  restore_alert_element.innerHTML = 'alert = alert1_pre.alert_bak;';
+  this.inject_script_element(restore_alert_element);
   if (this.settings.hooking_enabled && this.check_scope_whitelist()) {
     this.init();
   }
+  this.post_init();
 }).bind(alert1), ['settings', 'content']);
-*/
+
 // let's try loading settings from a file, synchronously
+/*
 var xhr = new XMLHttpRequest();
 xhr.open('get', chrome.runtime.getURL('settings.json'), false);
 xhr.send();
@@ -233,3 +284,4 @@ alert1.content = content_json;
 if (alert1.settings.hooking_enabled && alert1.check_scope_whitelist()) {
   alert1.init();
 }
+*/
