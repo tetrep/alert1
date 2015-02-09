@@ -19,7 +19,7 @@ alert1.init = function () {
       sound.play();
     }
 
-    chrome.notifications.create(data.page_title+'\n'+data.func+'("'+data.org_msg+'")\n'+data.location.href+'\n'+data.stack_trace, nopts, function(){});
+    chrome.notifications.create(data.page_title+'\n'+data.func+'('+data.org_msg+')\n'+data.location.href+'\n'+data.stack_trace, nopts, function(){});
   };
 
   this.display_stack_trace = function (nid) {

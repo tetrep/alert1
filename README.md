@@ -23,3 +23,5 @@ We're (semi-)relying upon Chrome's ability to convert functions into valid JavaS
 - make options page pretty
 - add add more details to notifications/stack traces?
 - cleanup content.js
+- fully automate object naming to gurantee no collisions
+- add dev mode to better troubleshoot potential issues caused by the extension (without needing to modify the extension itself)
