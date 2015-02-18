@@ -1,55 +1,99 @@
-// wraps what we need to pre load
+// wraps what we need to preload
 alert1.pre_init = function () {
-// we need to inject JS to make sure alerts don't get made before we can load our settings
-this.inject_script_element = function (script) {
-  // inject asap
-  var temp_node;
-  if (!(temp_node = document.childNodes[1])) {
-    temp_node = document.childNodes[0];
-  }
-  if (temp_node.childNodes.length != 0 && temp_node.childNodes[0].tagName != 'SCRIPT') {
-      document.insertBefore(script, temp_node.childNodes[0]);
-  } else {
-    temp_node.appendChild(script);
-  }
-};
+  // we need to inject JS to queue alerts made before we load our settings (hooray async)
+  // script_parent can be an element or an id
+  this.inject_script_element = function (script, script_parent) {
+    // default to trying to inject into our own div
+    if (!script_parent) {
+      script_parent = this.injected_div_id;
+    }
+    // get element by id if given id
+    if (typeof script_parent === 'string') {
+      script_parent = document.getElementById(script_parent);
+    }
+    // append to parent, if parent exists
+    if (script_parent) {
+      script_parent.appendChild(script);
+    }
+    // we don't have a parent target, inject into the first HTML element
+    else {
+      var temp_node = undefined;
+      // find first HTML element
+      // fuck nodelists...
+      for (var index = 0; index < document.childNodes.length; index++) {
+        if (document.childNodes[index].tagName === 'HTML') {
+          temp_node = document.childNodes[index];
+          break;
+        }
+      }
+      if (temp_node) {
+        // make a div to put ourselves in, if we have a name to give one
+        if (this.injected_div_id) {
+          var injected_div = document.createElement('div');
+          injected_div.setAttribute('id', this.injected_div_id);
+          injected_div.appendChild(script);
+          // set script to div so we can use the same injection logic
+          script = injected_div;
+        }
+        // if there are children, inject ourselves before them
+        if (temp_node.childNodes.length != 0) {
+          document.insertBefore(script, temp_node.childNodes[0]);
+        }
+        // no children ;)
+        else {
+          temp_node.appendChild(script);
+        }
+      }
+      else {
+        //console.log('error: could not find HTML tag to inject into');
+        throw 'alert1: wtfbbqq';
+      }
+    }
+  };
 
-// make an alert queue that we'll operate on once we load settings
-this.pre_load_settings = function () {
-  this.alert_queue = [];
-  this.alert_queue_wrapper = function (msg) {
-    this.alert_queue.push(msg);
-  }
-  this.alert_bak = alert;
-  alert = this.alert_queue_wrapper.bind(this);
-};
+  // make an alert queue that we'll operate on once we load settings
+  this.pre_load_settings = function () {
+    this.alert_queue = [];
+    this.alert_queue_wrapper = function (msg) {
+      this.alert_queue.push(msg);
+    }
+    this.alert_bak = alert;
+    alert = this.alert_queue_wrapper.bind(this);
+  };
 
-// prep a script element that will make an alert queue so we don't miss any alerts
-// while we wait for our settings to load (hooray forced async!)
-var pre_load_js_element = document.createElement('script');
-var pre_load_js_str = 'var alert1_pre = {};('+this.pre_load_settings.toString()+').bind(alert1_pre)();';
-pre_load_js_element.innerHTML = pre_load_js_str;
-this.inject_script_element(pre_load_js_element);
+  // prep a script element that will make an alert queue so we don't miss any alerts
+  // while we wait for our settings to load (hooray forced async!)
+  var pre_load_js_element = document.createElement('script');
+  var pre_load_js_str = 'var alert1_pre = {};\n('+this.pre_load_settings.toString()+').bind(alert1_pre)();';
+  pre_load_js_element.innerHTML = pre_load_js_str;
+  this.inject_script_element(pre_load_js_element);
 };
 
 alert1.post_init = function () {
-// process the alert queue
-this.post_load_settings = function () {
-  var i = 0;
-  for (i = 0; i < this.alert_queue.length; i++) {
-    alert(this.alert_queue[i]);
+  // function to process the alert queue
+  this.post_load_settings = function () {
+    var i = 0;
+    for (i = 0; i < this.alert_queue.length; i++) {
+      alert(this.alert_queue[i]);
+    }
+  };
+
+  // process the alert queue
+  var post_load_js_element = document.createElement('script');
+  var post_load_js_str = '('+this.post_load_settings.toString()+').bind(alert1_pre)();';
+  post_load_js_element.innerHTML = post_load_js_str;
+  this.inject_script_element(post_load_js_element);
+
+  // cleanup the dom by removing all the stuff we injected
+  if (this.injected_div_id) {
+    document.getElementById(this.injected_div_id).parentNode.removeChild(document.getElementById(this.injected_div_id));
   }
 };
 
-// process the alert queue
-var post_load_js_element = document.createElement('script');
-var post_load_js_str = '('+this.post_load_settings.toString()+').bind(alert1_pre)();';
-post_load_js_element.innerHTML = post_load_js_str;
-this.inject_script_element(post_load_js_element);
-};
-
-
-//wraps literally everthing, we don't do anything if we're not enabled
+// =======================
+// BEGIN MONOLITHIC OBJECT
+// =======================
+// wraps literally everthing, we don't do anything if we're not enabled
 alert1.init = function () {
 
 this.make_chrome_notification = function (data) {
@@ -96,7 +140,7 @@ this.hook_wrapper = function (input) {
 
   //check whitelist
   if (this.whitelist) {
-    if (-1 == this.whitelist.indexOf(input)) {
+    if (-1 === this.whitelist.indexOf(input)) {
       //console.log('whitelist fail');
       whitelist_pass = false;
     }
@@ -234,8 +278,11 @@ window.addEventListener("message", (function(event) {
 
 this.inject_js();
 };
+// =======================
+// END MONOLITHIC OBJECT
+// =======================
 
-// check if our domain is in scope
+// check for whether or not our domain is in scope
 alert1.check_scope_whitelist = function () {
   if (!this.content.scope_whitelist) {
     this.content.scope_whitelist = "[]";
@@ -252,6 +299,10 @@ alert1.check_scope_whitelist = function () {
   return false;
 };
 
+// TODO make this supermagicdynamical along with the injected object's name
+// we're very creative...
+alert1.injected_div_id = "alert1_injected_div_id";
+
 // setup to make sure we don't miss alerts while waiting for settings
 alert1.pre_init();
 // only do stuff if we're enabled
@@ -259,6 +310,7 @@ alert1.load_settings((function () {
   // restore alert after we hooked it to make a queue of alerts that occur before we load our settings
   var restore_alert_element = document.createElement('script');
   restore_alert_element.innerHTML = 'alert = alert1_pre.alert_bak;';
+  restore_alert_element.innerHTML += '\ndocument.currentScript.parentNode.removeChild(document.currentScript);';
   this.inject_script_element(restore_alert_element);
   if (this.settings.hooking_enabled && this.check_scope_whitelist()) {
     this.init();

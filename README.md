@@ -1,27 +1,30 @@
 # alert1
 ## what
-Chrome extension that hooks the `alert` function to replace the pop-ups with desktop notifications, notifications may be clicked to get stack traces from when the alert was called.
+Chrome extension that hooks the `alert` function to replace the pop-ups with desktop notifications, notifications may be clicked to get stack traces from when the alert was called, as well as the window.location that created the `alert`.
+
+Current known limitation is that dynmaic iframes are not supported.
 
 ## install
+heh...
 
-## update
-The extension is always injected into the page. If disabled via the pop-up, notifications will stop but the content script will still inject and hook `alert(1)`. To change this, manually edit the `settings.json` and `content.json` files.
-
-Download the repo and load it as an unpacked extension. Edit the top box in the extension's options page to contain a JavaScript array of regex strings, i.e. if you want to load the extension on all pages, use `["."]`. Save your settings. Enable/disable (it's disabled by default) the extension via its icon's pop-up.
-
-After the extension is enabled and succesfully injected into a page once (it needs to pass the regex whitelist), the other options in the options page will popuplate. They will automatically repopulate with defaults (with the exception of the regex whitelist) if they are blank when the extension injects into a page. The extension will only inject into a page if it is enabled and if the pages `window.location` passes the user-provided regex whitelist.
-
-## why
-To smooth out alert spam during pen tests. Also, sound effects.
+- the repository is an unpacked extension, load it as such
+- in the options page set the first text box to a JavaScript array of regex strings to match against `window.location`, e.g. `["."]` will cause the extension to inject into all pages
+- enable the extension via its pop-up (click its icon in the top right)
+- after successfully injecting into a page, the extension will populate the options page with its defaults (probably best not to change any of these unless you know what you're doing)
 
 ## how
 Super hacky, JavaScript must be directly injected into every page (via the DOM) because extensions have a seperate JavaScript context. Then, in order to communicate back, we listen for postMessages that contain a nonce we randomly generated during injection, we post info from those messages to our backgrounded JavaScript. The backgrounded JavaScript takes the messages and displays them as a notification. If a notification is clicked a new window is opened with the stack trace from when the hooked function was called.
 
 We're (semi-)relying upon Chrome's ability to convert functions into valid JavaScript strings to make the injection programmatic, but this is not (afaik) defined behavior and could break whenever the devs feel like it.
 
+To deal with the async-only API that is Chrome's localStorage, we need to ALWAYS inject into pages, even if we don't care about the page. We hook `alert` to build a queue of alert calls, which we then process after we have loaded our settings from localStorage.
+
 ## todo
+- fully automate object naming to gurantee no collisions
 - make options page pretty
 - add add more details to notifications/stack traces?
 - cleanup content.js
-- fully automate object naming to gurantee no collisions
 - add dev mode to better troubleshoot potential issues caused by the extension (without needing to modify the extension itself)
+- make install simple, obvious, not shitty, etc
+- load default options from file for small performance boost when injecting
+- support for dynamic iframes? would probably be disgustingly hacky and intrusive, at best
